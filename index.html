@@ -412,7 +412,16 @@ function tidy(s) {
   s.ebest = num(s.ebest);
   for (const q of ["days", "hdays", "adays", "dex", "runs", "kofi", "ach"]) if (!s[q] || typeof s[q] !== "object" || Array.isArray(s[q])) s[q] = {};
   for (const k in s.dex) s.dex[k] = num(s.dex[k]);
-  for (const m in s.runs) { const r = s.runs[m]; if (r === null) continue; if (typeof r !== "object" || !Array.isArray(r.list) || !Array.isArray(r.res) || !r.list.every((t) => typeof t === "string" && G.BY[t.split("|")[0]])) { delete s.runs[m]; continue; } if ("life" in r) r.life = num(r.life); }
+  // 日付と日ごとの記録の形も確かめ、壊れたものは捨てる（細工した引き継ぎコードで画面が止まらないように。2026-11-05 CodeRabbit）
+  const okDate = (v) => typeof v === "string" && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(v));
+  const okTag = (t) => typeof t === "string" && Object.prototype.hasOwnProperty.call(G.BY, t.split("|")[0]);
+  const okRec = (x) => !!x && typeof x === "object" && Array.isArray(x.m) && x.m.every((v) => Number.isInteger(v) && v >= 0);
+  for (const b of [s.days, s.hdays, s.adays]) for (const d in b) if (!okDate(d) || !okRec(b[d])) delete b[d];
+  for (const m in s.runs) {
+    const r = s.runs[m]; if (r === null) continue;
+    if (typeof r !== "object" || !okDate(r.date) || !Array.isArray(r.list) || !r.list.every(okTag) || !Array.isArray(r.res) || !r.res.every((x) => x && typeof x === "object" && Number.isInteger(x.m) && x.m >= 0)) { delete s.runs[m]; continue; }
+    if ("life" in r) r.life = num(r.life);
+  }
   return s;
 }
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
