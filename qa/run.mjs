@@ -232,10 +232,10 @@ try {
   {
     // 引き継ぎコードなどで数の所に文字が入っても、画面に HTML として出さない（2026-11-05 CodeRabbit）
     const q = await newPage(); await closeHow(q);
-    await q.evaluate(() => { const s = JSON.parse(localStorage.getItem("kimari-v1")) || { v: 1 }; s.ebest = '<img id="xss" src=x>'; s.dex = { add: '"><b id="xss2">' }; s.runs = { e: { mode: "e", id: "x", date: "2026-11-05", list: ["add|1"], res: [], life: '"><i id="xss3">' }, h: { list: "bad", res: [] }, p: { mode: "p", id: "y", date: "2026-11-05", list: ["constructor|1"], res: [] }, d: { mode: "d", id: "z", date: "x", list: ["add|1"], res: [null] } }; s.days = { "2026-11-05": { m: "x" }, bad: { m: [0] } }; localStorage.setItem("kimari-v1", JSON.stringify(s)); });
+    await q.evaluate(() => { const s = JSON.parse(localStorage.getItem("kimari-v1")) || { v: 1 }; s.ebest = '<img id="xss" src=x>'; s.dex = { add: '"><b id="xss2">' }; s.runs = { e: { mode: "e", id: "x", date: "2026-11-05", list: ["add|1"], res: [], life: '"><i id="xss3">' }, h: { list: "bad", res: [] }, p: { mode: "p", id: "y", date: "2026-11-05", list: ["constructor|1"], res: [] }, d: { mode: "d", id: "z", date: "x", list: ["add|1"], res: [] }, a1: { mode: "a", id: "a1", date: "2026-11-04", list: ["add|1"], res: [null] }, a2: { mode: "a", id: "a2", date: "2026-11-03", list: "bad", res: [] }, a3: { mode: "a", id: "a3", date: "2026-11-02", list: ["add|1", "add|2"], res: [{ m: 0 }], cur: { i: 1, tag: "add|2", wrong: "x", hints: 0 } } }; s.days = { "2026-11-05": { m: "x" }, bad: { m: [0] }, "2026-02-30": { m: [0] } }; localStorage.setItem("kimari-v1", JSON.stringify(s)); });
     await q.reload(); await q.waitForTimeout(250);
     const st = await q.evaluate(() => __km.load());
-    check("記録の形を直す：数の所の文字は0に・形のちがう途中経過と日ごとの記録は捨てる", st.ebest === 0 && st.dex.add === 0 && st.runs.e.life === 0 && !("h" in st.runs) && !("p" in st.runs) && !("d" in st.runs) && Object.keys(st.days).length === 0);
+    check("記録の形を直す：数の所の文字は0に・形のちがう途中経過と日ごとの記録は捨てる", st.ebest === 0 && st.dex.add === 0 && st.runs.e.life === 0 && !("h" in st.runs) && !("p" in st.runs) && !("d" in st.runs) && !("a1" in st.runs) && !("a2" in st.runs) && st.runs.a3 && st.runs.a3.cur === null && Object.keys(st.days).length === 0);
     await q.click("#go-e").catch(() => {}); await q.waitForTimeout(150);
     check("記録の文字を HTML として出さない", await q.locator("#xss, #xss2, #xss3").count() === 0);
     await q.context().close();
