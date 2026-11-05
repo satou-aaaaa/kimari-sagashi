@@ -108,7 +108,7 @@ check("一行の式の途中にコメント // を足さない（行の残りが
 check("言い方：「予防できる」「脳が若返る」などを言い切らない", !/予防でき|予防します|予防になる|防げます|若返|脳年齢|ボケ防止|治りま/.test(html + readFileSync(path.join(root, "README.md"), "utf8")));
 check("言い方：「このゲームについて」に医療機器ではないこと・WHO の弱い勧め・相談先がある", /医療機器ではなく/.test(html) && /勧めてもよい/.test(html) && /かかりつけの医師/.test(html) && /doi\.org\/10\.1001\/jama\.296\.23\.2805/.test(html) && /doi\.org\/10\.1111\/jgs\.12607/.test(html));
 check("画面にお笑いの言葉を入れない（本物っぽく）", !/お笑い|ギャグ|ツッコミ|なんでやねん|（うそ）/.test(html));
-check("引き継ぎ：transfer.js をゲームの script より前に、このゲームの記録のキーだけで読む", /<script src="transfer\.js" data-game="kimari-sagashi" data-keys="kimari-v1,kimari-fs,a11y-v1"><\/script>\s*<\/head>/.test(html) && html.indexOf('src="transfer.js"') < html.indexOf('src="gen.js"') && /data-hk/.test(html) && existsSync(path.join(root, "transfer.js")));
+check("引き継ぎ：transfer.js をゲームの script より前に、このゲームの記録のキーだけで読む", /<script src="transfer\.js" data-game="kimari-sagashi" data-keys="kimari-v1,kimari-fs"><\/script>\s*<\/head>/.test(html) && html.indexOf('src="transfer.js"') < html.indexOf('src="gen.js"') && /data-hk/.test(html) && existsSync(path.join(root, "transfer.js")));
 { const og = (k) => (html.match(new RegExp(`<meta (?:property|name)="${k}" content="([^"]+)"`)) || [])[1] || "";
   const png = readFileSync(path.join(root, "og.png"));
   check("SNS で貼ると絵と題が出る（OGP・1200×630・絶対URL）", og("og:title") && og("og:description") && og("og:image") === "https://satou-aaaaa.github.io/kimari-sagashi/og.png" && og("twitter:card") === "summary_large_image" && png.readUInt32BE(16) === 1200 && png.readUInt32BE(20) === 630); }
