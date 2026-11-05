@@ -225,8 +225,21 @@ try {
   await p.click(`.ch[data-j="${await wrongIdx(p)}"]`);
   await p.waitForSelector(".verdict.lose", { timeout: 3000 }).catch(() => {});
   check("🌸が無いときにまちがえると「ここまで」（答えときまりを見せる）", await p.locator(".verdict.lose").count() === 1 && (await p.textContent(".verdict.lose")).includes("きまり"));
-  await p.click("#next");
+  // 「ここまで」のあとに開き直しても、続きからにならず結果へ進む（🌸0のまま続けて自己ベストを水増しさせない。2026-11-05 CodeRabbit）
+  await p.reload(); await p.waitForTimeout(250);
+  check("とことんの「ここまで」は開き直しても続きからにならない", await p.locator("#eres").count() === 1 && await p.locator(".ch").count() === 0);
   check("とことんの自己ベストが残る（3問）", (await mem(p)).ebest === 3 && (await p.textContent("#eres")).includes("3問"));
+  {
+    // 引き継ぎコードなどで数の所に文字が入っても、画面に HTML として出さない（2026-11-05 CodeRabbit）
+    const q = await newPage(); await closeHow(q);
+    await q.evaluate(() => { const s = JSON.parse(localStorage.getItem("kimari-v1")) || { v: 1 }; s.ebest = '<img id="xss" src=x>'; s.dex = { add: '"><b id="xss2">' }; s.runs = { e: { mode: "e", id: "x", date: "2026-11-05", list: ["add|1"], res: [], life: '"><i id="xss3">' }, h: { list: "bad", res: [] } }; localStorage.setItem("kimari-v1", JSON.stringify(s)); });
+    await q.reload(); await q.waitForTimeout(250);
+    const st = await q.evaluate(() => __km.load());
+    check("記録の形を直す：数の所の文字は0に・形のちがう途中経過は捨てる", st.ebest === 0 && st.dex.add === 0 && st.runs.e.life === 0 && !("h" in st.runs));
+    await q.click("#go-e").catch(() => {}); await q.waitForTimeout(150);
+    check("記録の文字を HTML として出さない", await q.locator("#xss, #xss2, #xss3").count() === 0);
+    await q.context().close();
+  }
   // 実績・このゲームについて
   await p.click("#back"); await p.click("#go-ach");
   check("実績は13個で、腕前・集める・続けるの3つの組", await p.locator(".ach").count() === 13 && await p.locator(".agrp").count() === 3 && await p.locator(".ach.got").count() >= 3);
