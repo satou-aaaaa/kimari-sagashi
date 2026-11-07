@@ -159,6 +159,8 @@ try {
   await p.keyboard.press("Escape"); await p.waitForTimeout(100); check("遊び方を Esc で閉じられる", await p.locator("#howto[open]").count() === 0);
   await p.reload(); await p.waitForTimeout(200); check("遊び方を Esc で閉じても、開き直したとき出ない", await p.locator("#howto[open]").count() === 0);
   await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await p.click("#howto-ok"); await p.reload(); await p.waitForTimeout(200); check("遊び方を「わかった」で閉じてすぐ読み直しても出ない", await p.locator("#howto[open]").count() === 0);
+  { let again = 0; for (let i = 0; i < 10; i++) { await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await p.keyboard.press("Escape"); await p.reload(); await p.waitForTimeout(200); again += await p.locator("#howto[open]").count(); } check("遊び方を Esc で閉じてすぐ読み直しても出ない（10回）", again === 0); }
+  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); check("「わかった」を押したその場で「見た」が残る", await p.locator("#howto-ok").evaluate((b) => { b.click(); return Object.keys(localStorage).some((k) => { try { return JSON.parse(localStorage.getItem(k)).tut === true; } catch { return false; } }); }));
   check("文字の大きさ：はじめは「大きい」（21px）", await p.evaluate(() => getComputedStyle(document.documentElement).fontSize) === "21px");
   await p.click('.fsrow button[data-fs="3"]');
   await p.reload(); await p.waitForTimeout(150);
