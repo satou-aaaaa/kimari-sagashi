@@ -357,6 +357,10 @@ try {
   const sample = { "kimari-v1": JSON.stringify({ v: 1, tut: true, days: { "2026-11-05": { m: [0, 1, 0, 0, 2], k: ["week", "add", "clock", "kana2", "alt"] } }, hdays: {}, adays: {}, dex: { week: 1, add: 1, clock: 1, kana2: 1, alt: 1 }, runs: {}, kofi: {}, ach: {}, ebest: 7, t: 1 }), "kimari-fs": "3" };
   await checkTransfer({ browser, url, game: "kimari-sagashi", sample, check, open: async (pg) => { if (await pg.locator("#howto[open]").count()) await pg.click("#howto-ok"); } });
 } catch (e) { check("引き継ぎの検査が最後まで動く", false, e.message.split("\n")[0]); }
+// 保存に失敗したら知らせる（2026-11-07 暑さ指数よみで見つけた。黙って記録が消えないように）
+{ const ps = await browser.newPage(); await ps.goto(url); await ps.waitForTimeout(200);
+  check("保存に失敗したら、遊んでいる途中でも知らせる（1回だけ）", await ps.evaluate(async () => { const orig = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; const n0 = document.querySelectorAll(".toast").length; save(() => {}); save(() => {}); await new Promise((r) => setTimeout(r, 50)); const ts = [...document.querySelectorAll(".toast")].slice(n0).map((d) => d.textContent); Storage.prototype.setItem = orig; save(() => {}); return ts.length === 1 && ts[0].includes("保存できませんでした"); }));
+  await ps.close(); }
 await browser.close();
 server.close();
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
