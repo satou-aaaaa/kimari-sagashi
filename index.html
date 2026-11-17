@@ -152,7 +152,7 @@ dialog#howto h2{margin:0 0 10px;letter-spacing:.1em}
 dialog#howto ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
 dialog#howto p{margin:0 0 10px;font-size:.9rem;line-height:1.7;color:var(--ink2)}
 dialog#howto a{color:var(--shu2);min-height:44px;display:inline-flex;align-items:center}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0005;max-width:90%;text-align:center;font-size:1rem}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0005;max-width:90%;text-align:center;font-size:1rem}
 footer{margin-top:auto;text-align:center;font-size:.8rem;color:var(--ink2);display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap}
 footer a{color:var(--ink2);min-height:44px;display:inline-flex;align-items:center}
 /* 読み上げのボタン（右下）が出ても、いちばん下のリンクにかぶらない（.wrap の下に 88px の余白） */
@@ -607,7 +607,7 @@ function play() {
   $("back").onclick = home;
   document.querySelectorAll(".ch").forEach((b) => (b.onclick = () => choose(+b.dataset.j)));
   if ($("hint")) $("hint").onclick = hint;
-  if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; finish(); };
+  if ($("quit")) $("quit").onclick = () => finish();
   paint();
   toTop();
   // 画面を作り直すとフォーカスが body に戻るので、問題へ移す（キーボード・読み上げで続けられる）
@@ -649,6 +649,7 @@ function choose(j) {
   const m = missOf(), st = starsOf(m), P = cur.P;
   const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ m }); r.cur = null; s.dex[P.kind] = (s.dex[P.kind] || 0) + 1; });
   const r = s.runs[MODE], fin = r && r.res.length >= r.list.length;
+  if ($("quit") && r && r.mode === "e") $("quit").textContent = `ここでやめる（${r.res.length}問で終える）`; // 正解した分も数える
   const ask = $("ask"); ask.innerHTML = tokHtml(P.ans); ask.classList.add("got"); ask.setAttribute("aria-label", G.sayOf(P.ans));
   document.querySelectorAll(".ch").forEach((b) => { b.disabled = true; if (P.opts[+b.dataset.j] === P.ans) b.classList.add("ok"); });
   if ($("hint")) $("hint").disabled = true;
@@ -665,7 +666,7 @@ function lose() {
   cur.done = true; const P = cur.P;
   const ask = $("ask"); ask.innerHTML = tokHtml(P.ans); ask.classList.add("got"); ask.setAttribute("aria-label", G.sayOf(P.ans));
   document.querySelectorAll(".ch").forEach((b) => { b.disabled = true; if (P.opts[+b.dataset.j] === P.ans) b.classList.add("ok"); });
-  if ($("hint")) $("hint").disabled = true; if ($("quit")) $("quit").hidden = true;
+  if ($("hint")) $("hint").disabled = true; if ($("quit")) $("quit").remove(); // 🌸が尽きて回は終わり。「結果を見る」だけにする
   $("after").innerHTML = `<div class="verdict lose" role="status"><div class="hd">ここまで</div><p class="why"><b>きまり：</b>${esc(P.why)}</p><button class="main" id="next">結果を見る</button></div>`;
   $("next").onclick = finish;
 }
