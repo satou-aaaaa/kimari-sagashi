@@ -246,6 +246,15 @@ try {
   check("とことんの自己ベストが残る（3問）", (await mem(p)).ebest === 3 && (await p.textContent("#eres")).includes("3問"));
   {
     // 引き継ぎコードなどで数の所に文字が入っても、画面に HTML として出さない（2026-11-05 CodeRabbit）
+    // 正解した直後（次へを押す前）でも「ここでやめる」で終われ、その1問が数に入る（前は cur.done のとき押しても何も起きなかった）
+    const q0 = await newPage(); await closeHow(q0);
+    await q0.click("#go-e"); await solve(q0);
+    check("とことんで正解した直後の「ここでやめる」は、正解した1問を入れた数", (await q0.textContent("#quit")).includes("1問で終える"), await q0.textContent("#quit"));
+    await q0.click("#quit"); await q0.waitForTimeout(150);
+    check("とことんで正解した直後に「ここでやめる」を押すと結果の画面になり、正解した1問が数に入る", await q0.locator("#eres").count() === 1 && (await q0.textContent("#eres")).includes("1問") && (await mem(q0)).ebest === 1 && !(await mem(q0)).runs.e);
+    await q0.context().close();
+  }
+  {
     const q = await newPage(); await closeHow(q);
     await q.evaluate(() => { const s = JSON.parse(localStorage.getItem("kimari-v1")) || { v: 1 }; s.ebest = '<img id="xss" src=x>'; s.dex = { add: '"><b id="xss2">' }; s.runs = { e: { mode: "e", id: "x", date: "2026-11-05", list: ["add|1"], res: [], life: '"><i id="xss3">' }, h: { list: "bad", res: [] }, p: { mode: "p", id: "y", date: "2026-11-05", list: ["constructor|1"], res: [] }, d: { mode: "d", id: "z", date: "x", list: ["add|1"], res: [] }, a1: { mode: "a", id: "a1", date: "2026-11-04", list: ["add|1"], res: [null] }, a2: { mode: "a", id: "a2", date: "2026-11-03", list: "bad", res: [] }, a3: { mode: "a", id: "a3", date: "2026-11-02", list: ["add|1", "add|2"], res: [{ m: 0 }], cur: { i: 1, tag: "add|2", wrong: "x", hints: 0 } } }; s.days = { "2026-11-05": { m: "x" }, bad: { m: [0] }, "2026-02-30": { m: [0] } }; localStorage.setItem("kimari-v1", JSON.stringify(s)); });
     await q.reload(); await q.waitForTimeout(250);
@@ -367,6 +376,10 @@ try {
   check("保存できない帯は画面のいちばん上に場所を取り（ボタンに重ならない）、読み上げの知らせにも出し、ほかの知らせのあとも警告が残る・保存できたら帯と警告が消え、ほかの知らせは残る", await ps.evaluate(async () => { const W = "保存できませんでした", tick = () => new Promise((r) => setTimeout(r, 50)); const orig = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; save(() => {}); const b = document.getElementById("savewarn"); const top = !!b && document.body.firstElementChild === b && getComputedStyle(b).position === "sticky"; const l = document.getElementById("live"); let live = true, kept = true, other = true; if (l) { live = l.textContent.includes(W); l.textContent = ""; await tick(); l.textContent = "べつの知らせ"; await tick(); kept = l.textContent.includes("べつの知らせ") && l.textContent.includes(W); } Storage.prototype.setItem = orig; save(() => {}); await tick(); if (l) other = l.textContent === "べつの知らせ"; return top && live && kept && other && !document.getElementById("savewarn"); }));
   check("保存できない帯は、長い画面を下までスクロールしても画面の上に見えている（body の高さで止まらない）", await ps.evaluate(async () => { const orig = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; save(() => {}); const pad = document.createElement("div"); pad.style.height = "3000px"; document.body.appendChild(pad); scrollTo(0, document.documentElement.scrollHeight); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); const b = document.getElementById("savewarn"), r = b && b.getBoundingClientRect(); const ok = !!r && scrollY > 1000 && r.top >= -1 && r.top < 5; pad.remove(); scrollTo(0, 0); Storage.prototype.setItem = orig; save(() => {}); return ok && !document.getElementById("savewarn"); }));
   await ps.close(); }
+{ // 知らせ（.toast）は下のボタンを塞がない（shared-workflows incidents/2026-11-17-known-game-bugs-spread.md）
+  const pt = await browser.newPage(); await pt.goto(url);
+  check("知らせ（.toast）が出ていても、その下のボタンを押せる（pointer-events:none）", await pt.evaluate(() => { const d = document.createElement("div"); d.className = "toast"; document.body.appendChild(d); const v = getComputedStyle(d).pointerEvents; d.remove(); return v === "none"; }));
+  await pt.close(); }
 await browser.close();
 server.close();
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
