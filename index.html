@@ -444,6 +444,8 @@ function tidy(s) {
     if (typeof r !== "object" || !okDate(r.date) || !Array.isArray(r.list) || !r.list.every(okTag) || !Array.isArray(r.res) || !r.res.every((x) => x && typeof x === "object" && Number.isInteger(x.m) && x.m >= 0)) { delete s.runs[m]; continue; }
     if (r.cur != null && (typeof r.cur !== "object" || !Array.isArray(r.cur.wrong))) r.cur = null; else if (r.cur) { r.cur.hints = num(r.cur.hints); r.cur.jd = r.cur.jd && typeof r.cur.jd === "object" && r.cur.jd.sure === true ? { sure: true, ok: r.cur.jd.ok === true, text: "" } : null; }
     if ("life" in r) r.life = num(r.life);
+    // 自信ありの数も、0以上の整数で当たり≦数のときだけ残す（結果の画面に HTML として出さない。2026-11-17 CodeRabbit）
+    if ("ds" in r) { const d = r.ds, ok = (v) => Number.isInteger(v) && v >= 0; r.ds = d && typeof d === "object" && ok(d.n) && ok(d.ok) && d.ok <= d.n ? { n: d.n, ok: d.ok } : null; }
   }
   return s;
 }

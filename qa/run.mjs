@@ -265,6 +265,17 @@ try {
     check("記録の文字を HTML として出さない", await q.locator("#xss, #xss2, #xss3").count() === 0);
     await q.context().close();
   }
+  {
+    // 保存した自信ありの数（ds）も形を確かめる：文字や当たり＞数は捨て、結果の画面に HTML として出さない（2026-11-17 CodeRabbit）
+    const q = await newPage(); await closeHow(q);
+    await q.evaluate(() => { const s = __km.load(), d = __km.todayKey(); s.runs = { e: { mode: "e", id: "x", date: d, list: ["add|1", "add|2"], res: [{ m: 0 }], ds: { n: '<b id="xssd">', ok: 99 } }, a3: { mode: "a", id: "a3", date: "2026-11-02", list: ["add|1", "add|2"], res: [{ m: 0 }], ds: { n: 2, ok: 5 } }, a4: { mode: "a", id: "a4", date: "2026-11-01", list: ["add|1", "add|2"], res: [{ m: 0 }], ds: { n: 3, ok: 1 } } }; localStorage.setItem(__km.KEY, JSON.stringify(s)); });
+    await q.reload(); await q.waitForTimeout(250);
+    const st = await q.evaluate(() => __km.load());
+    check("保存した自信ありの数の形を直す：文字・当たり＞数は null、正しいものは残る", st.runs.e && st.runs.e.ds === null && st.runs.a3 && st.runs.a3.ds === null && st.runs.a4 && JSON.stringify(st.runs.a4.ds) === '{"n":3,"ok":1}', JSON.stringify([st.runs.e && st.runs.e.ds, st.runs.a3 && st.runs.a3.ds, st.runs.a4 && st.runs.a4.ds]));
+    await q.click("#go-e").catch(() => {}); await q.waitForTimeout(150); await q.click("#quit").catch(() => {}); await q.waitForTimeout(150);
+    check("壊れた自信ありの数を、とことんの結果に HTML として出さない", await q.locator("#eres").count() === 1 && await q.locator("#xssd").count() === 0 && await q.locator("#surestat").count() === 0);
+    await q.context().close();
+  }
   // 実績・このゲームについて
   await p.click("#back"); await p.click("#go-ach");
   check("実績は15個で、腕前・集める・続けるの3つの組", await p.locator(".ach").count() === 15 && await p.locator(".agrp").count() === 3 && await p.locator(".ach.got").count() >= 3);
