@@ -102,14 +102,16 @@ function shapePred(items) {
 
 // ---- 2. ファイルの中身 ----
 const html = readFileSync(path.join(root, "index.html"), "utf8"), gen = readFileSync(path.join(root, "gen.js"), "utf8");
+// ひな形の写し（<!-- 名前:begin〜end -->）はゲームの言葉ではないので外し、Core.kofi・Core.KOFI は写す前の形にもどして見る（shared-workflows の sync-template が足した）
+const gameOwn = (t) => t.replace(/<!-- ([a-z0-9-]+):begin[\s\S]*?<!-- \1:end -->/g, "").split("${Core.KOFI}").join("https://ko-fi.com/satouaaaaa").replace(/Core\.kofi\(("(?:[^"\\]|\\.)*"), ("(?:[^"\\]|\\.)*")\)/g, (m, a, b) => "`<p class=\"note kofi\">" + JSON.parse(a) + "、<a href=\"https://ko-fi.com/satouaaaaa\" target=\"_blank\" rel=\"noopener\">Ko-fi でコーヒー1杯の応援</a>をもらえると、" + JSON.parse(b) + "の励みになります（任意・遊ぶのはずっと無料）。</p>`");
 const ext = [...html.matchAll(/(?:src|href)="(https?:[^"]+)"/g)].map((m) => m[1]).filter((u) => !/^https:\/\/fonts\.googleapis\.com(\/|$)|^https:\/\/ko-fi\.com\/satouaaaaa$|^https:\/\/(doi\.org|www\.who\.int)\//.test(u));
 check("外から読むのは文字（Google Fonts）だけ。スクリプト・広告・解析を入れない（出典のリンクは押したときに開くだけ）", ext.length === 0 && ![...html.matchAll(/<script[^>]+src="([^"]+)"/g)].some((m) => /^https?:/.test(m[1])), ext.join(","));
 check("CSP で通信先を自分だけにしている", /connect-src 'self'/.test(html) && !/connect-src[^;"]*https/.test(html));
 check("Math.random は練習・とことんの種だけ（今日の5問・上級は日付の乱数。gen.js には無い）", (html.match(/Math\.random/g) || []).length === 2 && !/Math\.random/.test(gen));
 check("乱数は sort の比較の中で引かない（ブラウザで引く回数が変わる）", !/\.sort\(\s*\([^)]*\)\s*=>[^\n;]*\b(R|rng|rand|Math\.random)\s*\(/.test(html + gen));
 check("一行の式の途中にコメント // を足さない（行の残りが消える。rosen-hitofude 2026-11-04）", !/;\s*\/\/[^\n]*;\s*\w/.test(gen.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n")));
-check("言い方：「予防できる」「脳が若返る」などを言い切らない", !/予防でき|予防します|予防になる|防げます|若返|脳年齢|ボケ防止|治りま/.test(html + readFileSync(path.join(root, "README.md"), "utf8")));
-check("言い方：「このゲームについて」に医療機器ではないこと・WHO の弱い勧め・相談先がある", /医療機器ではなく/.test(html) && /勧めてもよい/.test(html) && /かかりつけの医師/.test(html) && /doi\.org\/10\.1001\/jama\.296\.23\.2805/.test(html) && /doi\.org\/10\.1111\/jgs\.12607/.test(html));
+check("言い方：「予防できる」「脳が若返る」などを言い切らない", !/予防でき|予防します|予防になる|防げます|若返|脳年齢|ボケ防止|治りま/.test(gameOwn(html) + readFileSync(path.join(root, "README.md"), "utf8")));
+check("言い方：「このゲームについて」に医療機器ではないこと・WHO の弱い勧め・相談先がある", /医療機器ではなく/.test(gameOwn(html)) && /勧めてもよい/.test(gameOwn(html)) && /かかりつけの医師/.test(gameOwn(html)) && /doi\.org\/10\.1001\/jama\.296\.23\.2805/.test(gameOwn(html)) && /doi\.org\/10\.1111\/jgs\.12607/.test(gameOwn(html)));
 check("画面にお笑いの言葉を入れない（本物っぽく）", !/お笑い|ギャグ|ツッコミ|なんでやねん|（うそ）/.test(html));
 check("引き継ぎ：transfer.js をゲームの script より前に、このゲームの記録のキー（記録・文字・復習）だけで読む・depth.js も前に読む", /<script src="transfer\.js" data-game="kimari-sagashi" data-keys="kimari-v1,kimari-fs,kimari-depth"><\/script>\s*<script src="depth\.js" data-game="kimari-sagashi" data-key="kimari-depth"><\/script>\s*<\/head>/.test(html) && html.indexOf('src="transfer.js"') < html.indexOf('src="gen.js"') && html.indexOf('src="depth.js"') < html.indexOf('src="gen.js"') && /data-hk/.test(html) && existsSync(path.join(root, "transfer.js")));
 { const og = (k) => (html.match(new RegExp(`<meta (?:property|name)="${k}" content="([^"]+)"`)) || [])[1] || "";
